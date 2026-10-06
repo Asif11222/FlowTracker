@@ -28,6 +28,9 @@ class OrderTrackingTest extends TestCase
             ->assertSee('Track your order')
             ->assertSee('Order number')
             ->assertSee('Reference number')
+            ->assertSee('placeholder="e.g. FO-337118 or ORDER-00942"', false)
+            ->assertSee('tab-btn-order')
+            ->assertSee('tab-btn-reference')
             ->assertSee('Have a QR code?');
     }
 

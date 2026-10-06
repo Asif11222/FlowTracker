@@ -3,12 +3,10 @@
 @section('title', 'Track Your Order — STEP PROMO')
 
 @section('content')
-<div class="ft-lookup-layout" x-data="{
-    tab: '{{ old('identifier_type', $identifierType ?? 'order_number') }}',
-    setTab(t) {
-        this.tab = t;
-    }
-}">
+@php
+    $currentTab = old('identifier_type', $identifierType ?? 'order_number');
+@endphp
+<div class="ft-lookup-layout">
     <div class="ft-lookup-card">
         <h1 class="ft-lookup-title">Track your order</h1>
         <p class="ft-lookup-intro">Check the latest progress of your order.</p>
@@ -23,36 +21,38 @@
         <form method="POST" action="{{ route('order.track.lookup') }}">
             @csrf
 
-            <div class="ft-segmented-toggle">
+            <div class="ft-segmented-toggle" role="tablist" aria-label="Search identifier type">
                 <button
                     type="button"
-                    class="ft-segmented-btn"
-                    :class="{ 'active': tab === 'order_number' }"
-                    x-on:click="setTab('order_number')"
+                    id="tab-btn-order"
+                    class="ft-segmented-btn {{ $currentTab === 'order_number' ? 'active' : '' }}"
+                    role="tab"
+                    aria-selected="{{ $currentTab === 'order_number' ? 'true' : 'false' }}"
                 >
                     Order number
                 </button>
                 <button
                     type="button"
-                    class="ft-segmented-btn"
-                    :class="{ 'active': tab === 'reference_number' }"
-                    x-on:click="setTab('reference_number')"
+                    id="tab-btn-reference"
+                    class="ft-segmented-btn {{ $currentTab === 'reference_number' ? 'active' : '' }}"
+                    role="tab"
+                    aria-selected="{{ $currentTab === 'reference_number' ? 'true' : 'false' }}"
                 >
                     Reference number
                 </button>
             </div>
 
-            <input type="hidden" name="identifier_type" :value="tab">
+            <input type="hidden" name="identifier_type" id="identifier_type" value="{{ $currentTab }}">
 
             <div class="ft-form-field">
-                <label for="identifier" x-text="tab === 'order_number' ? 'Order number' : 'Reference number'"></label>
+                <label for="identifier" id="identifier_label">{{ $currentTab === 'order_number' ? 'Order number' : 'Reference number' }}</label>
                 <input
                     id="identifier"
                     name="identifier"
                     type="text"
                     required
                     class="ft-form-input"
-                    :placeholder="tab === 'order_number' ? 'e.g. FO-337118 or ORDER-00942' : 'e.g. JOB-2026-00109 or NP-2026-0148'"
+                    placeholder="{{ $currentTab === 'order_number' ? 'e.g. FO-337118 or ORDER-00942' : 'e.g. JOB-2026-00109 or NP-2026-0148' }}"
                     value="{{ old('identifier', $identifier ?? '') }}"
                     autofocus
                 >
@@ -137,3 +137,68 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    function initTrackingTabs() {
+        var btnOrder = document.getElementById('tab-btn-order');
+        var btnRef = document.getElementById('tab-btn-reference');
+        var inputType = document.getElementById('identifier_type');
+        var label = document.getElementById('identifier_label');
+        var input = document.getElementById('identifier');
+
+        if (!btnOrder || !btnRef || !inputType || !label || !input) {
+            return;
+        }
+
+        var config = {
+            order_number: {
+                label: 'Order number',
+                placeholder: 'e.g. FO-337118 or ORDER-00942'
+            },
+            reference_number: {
+                label: 'Reference number',
+                placeholder: 'e.g. JOB-2026-00109 or NP-2026-0148'
+            }
+        };
+
+        function switchTab(type) {
+            if (!config[type]) return;
+
+            inputType.value = type;
+            label.textContent = config[type].label;
+            input.placeholder = config[type].placeholder;
+
+            if (type === 'order_number') {
+                btnOrder.classList.add('active');
+                btnOrder.setAttribute('aria-selected', 'true');
+                btnRef.classList.remove('active');
+                btnRef.setAttribute('aria-selected', 'false');
+            } else {
+                btnRef.classList.add('active');
+                btnRef.setAttribute('aria-selected', 'true');
+                btnOrder.classList.remove('active');
+                btnOrder.setAttribute('aria-selected', 'false');
+            }
+
+            input.focus();
+        }
+
+        btnOrder.addEventListener('click', function () {
+            switchTab('order_number');
+        });
+
+        btnRef.addEventListener('click', function () {
+            switchTab('reference_number');
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTrackingTabs);
+    } else {
+        initTrackingTabs();
+    }
+})();
+</script>
+@endpush
